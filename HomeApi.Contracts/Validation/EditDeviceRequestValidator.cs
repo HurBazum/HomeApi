@@ -22,7 +22,7 @@ namespace HomeApi.Contracts.Validation
         /// <summary>
         ///  Метод кастомной валидации для свойства location
         /// </summary>
-        private bool BeSupported(string location)
+        bool BeSupported(string location)
         {
             return Values.ValidRooms.Any(room => room == location);
         }

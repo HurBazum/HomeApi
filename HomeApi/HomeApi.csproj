@@ -19,6 +19,7 @@
     <ItemGroup>
       <ProjectReference Include="..\HomeApi.Contracts\HomeApi.Contracts.csproj" />
       <ProjectReference Include="..\HomeApi.Data\HomeApi.Data.csproj" />
+      <ProjectReference Include="..\HomeApi.Extensions\HomeApi.Extensions.csproj" />
     </ItemGroup>
 
 </Project>

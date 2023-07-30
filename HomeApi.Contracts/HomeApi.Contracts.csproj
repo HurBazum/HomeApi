@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net5.0</TargetFramework>
@@ -6,6 +6,11 @@
 
     <ItemGroup>
       <PackageReference Include="FluentValidation" Version="10.2.3" />
+      <PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.2.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\HomeApi.Data\HomeApi.Data.csproj" />
     </ItemGroup>
 
 </Project>

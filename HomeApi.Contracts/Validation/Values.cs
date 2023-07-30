@@ -8,6 +8,6 @@ namespace HomeApi.Contracts.Validation
     /// </summary>
     public static class Values
     {
-        public static string[] ValidRooms = { "Кухня", "Ванная", "Туалет", "Гостиная" };
+        public readonly static string[] ValidRooms = { "Кухня", "Ванная", "Туалет", "Гостиная" };
     }
 }

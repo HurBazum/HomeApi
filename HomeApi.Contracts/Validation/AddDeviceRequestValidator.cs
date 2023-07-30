@@ -21,13 +21,14 @@ namespace HomeApi.Contracts.Validation
             RuleFor(x => x.SerialNumber).NotEmpty();
             RuleFor(x => x.CurrentVolts).NotEmpty().InclusiveBetween(120, 220); // Проверим, что значение в заданном диапазоне
             RuleFor(x => x.GasUsage).NotNull();
-            RuleFor(x => x.RoomLocation).NotEmpty().Must(BeSupported).WithMessage($"Пожалуйста, выберете одну из следующих комнат: {string.Join(", ", Values.ValidRooms)}");
+            RuleFor(x => x.RoomLocation).NotEmpty()
+                .Must(BeSupported).WithMessage($"Пожалуйста, выберете одну из следующих комнат: {string.Join(", ", Values.ValidRooms)}");
         }
         
         /// <summary>
         ///  Метод кастомной валидации для свойства location
         /// </summary>
-        private bool BeSupported(string location)
+        bool BeSupported(string location)
         {
             // Проверим, содержится ли значение в списке допустимых
             return Values.ValidRooms.Any(room => room == location);

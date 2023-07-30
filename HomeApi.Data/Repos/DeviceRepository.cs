@@ -50,6 +50,16 @@ namespace HomeApi.Data.Repos
         }
         
         /// <summary>
+        /// Найти устройства подключенные в определённой комнате
+        /// </summary>
+        public async Task<Device[]> GetDevicesByRoom(Room room)
+        {
+            return await _context.Devices
+                .Include(d => d.Room)
+                .Where(d => d.RoomId == room.Id).ToArrayAsync();
+        }
+
+        /// <summary>
         /// Добавить новое устройство
         /// </summary>
         public async Task SaveDevice(Device device, Room room)

@@ -12,7 +12,8 @@ namespace HomeApi.Contracts.Validation
         public AddRoomRequestValidator() 
         {
             RuleFor(x => x.Area).NotEmpty(); 
-            RuleFor(x => x.Name).NotEmpty().Must(BeSupported).WithMessage($"Пожалуйста, выберете одну из следующих комнат: {string.Join(", ", Values.ValidRooms)}");
+            RuleFor(x => x.Name).NotEmpty()
+                .Must(BeSupported).WithMessage($"Пожалуйста, выберете одну из следующих комнат: {string.Join(", ", Values.ValidRooms)}");
             RuleFor(x => x.Voltage).NotEmpty().GreaterThan(120);
             RuleFor(x => x.GasConnected).InclusiveBetween(false, true);
         }
