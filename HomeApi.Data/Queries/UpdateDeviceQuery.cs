@@ -7,11 +7,13 @@
     {
         public string NewName { get; }
         public string NewSerial { get; }
+        public string NewLocation { get; }
 
-        public UpdateDeviceQuery(string newName = null, string newSerial = null)
+        public UpdateDeviceQuery(string newName = null, string newSerial = null, string newLocation = null)
         {
             NewName = newName;
             NewSerial = newSerial;
+            NewLocation = newLocation;
         }
     }
 }

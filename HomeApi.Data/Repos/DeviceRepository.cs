@@ -92,7 +92,8 @@ namespace HomeApi.Data.Repos
                 device.Name = query.NewName;
             if (!string.IsNullOrEmpty(query.NewSerial))
                 device.SerialNumber = query.NewSerial;
-            
+            if (!string.IsNullOrEmpty(query.NewLocation))
+                device.Location = query.NewLocation;
             // Добавляем в базу 
             var entry = _context.Entry(device);
             if (entry.State == EntityState.Detached)

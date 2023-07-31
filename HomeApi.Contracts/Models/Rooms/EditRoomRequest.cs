@@ -1,11 +1,11 @@
-﻿using System;
-
-namespace HomeApi.Contracts.Models.Rooms
+﻿namespace HomeApi.Contracts.Models.Rooms
 {
     public class EditRoomRequest
     {
-        public int NewArea { get; set; }
-        public int NewVoltage { get; set; }
+        public bool ChangeAddDate { get; set; }
+        public string NewName { get; set; }
+        public int? NewArea { get; set; }
+        public int? NewVoltage { get; set; }
         public bool ChangeGasConnection { get; set; }
         /// <summary>
         /// Изменение вольтажа и подключение/отключение газа

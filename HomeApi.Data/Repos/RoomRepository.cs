@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using HomeApi.Data.Models;
 using HomeApi.Data.Queries;
@@ -51,14 +52,24 @@ namespace HomeApi.Data.Repos
         /// </summary>
         public async Task Update(Room room, UpdateRoomQuery updateRoomQuery)
         {
-            if(updateRoomQuery.NewArea != default) room.Area = updateRoomQuery.NewArea;
+            if(updateRoomQuery.NewArea != null) room.Area = Convert.ToInt32(updateRoomQuery.NewArea);
             if(updateRoomQuery.ChangeGasConnection != default) room.GasConnected = !room.GasConnected;
-            if(updateRoomQuery.NewVoltage != default) room.Voltage = updateRoomQuery.NewVoltage;
+            if(updateRoomQuery.NewVoltage != null) room.Voltage = Convert.ToInt32(updateRoomQuery.NewVoltage);
+            if(updateRoomQuery.UpdateDate != null) room.AddDate = Convert.ToDateTime(updateRoomQuery.UpdateDate);
+            if(!string.IsNullOrEmpty(updateRoomQuery.NewName)) room.Name = updateRoomQuery.NewName;
 
             var entry = _context.Entry(room);
             if(entry.State == EntityState.Detached)
                 _context.Rooms.Update(room);
 
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task Delete(Room room)
+        {
+            var entry = _context.Entry(room);
+            if (entry.State == EntityState.Detached)
+                _context.Rooms.Remove(room);
             await _context.SaveChangesAsync();
         }
     }

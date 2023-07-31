@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -66,14 +67,23 @@ namespace HomeApi.Controllers
         }
 
         /// <summary>
-        /// Изменение комнаты
+        /// Изменение комнаты:
+        /// для не булевых значений в реквесте, если не нужно их изменять, необходимо ввести null.
+        /// т.о. можно изменить все свойства комнаты, кроме Id(вроде для этого нужно удалить комнату, а потом добавить новую),
+        /// при этом так же может происходить апдейт устройств, изменяеться их свойство Location, или они вовсе могут быть удалены
         /// </summary>
-        [HttpPatch]
+        [HttpPut]
         [Route("Update/{name}")]
         public async Task<IActionResult> Update([FromRoute] string name, [FromBody] EditRoomRequest editRoomRequest)
         {
             var room = _roomRepository.GetRoomByName(name).Result;
-            if (room == null) return NotFound($"Ошибка: Комната с именем \"{name}\" не подключена");
+            if (room == null) 
+                return NotFound($"Ошибка: Комната с именем \"{name}\" не подключена");
+
+            // проверка на существование комнаты с именем из реквеста
+            var exsistRoom = _roomRepository.GetRoomByName(editRoomRequest.NewName).Result;
+            if (exsistRoom != null)
+                return StatusCode(409, $"Ошибка: Комната с именем \"{editRoomRequest.NewName}\" уже подключена.");
 
             // получаем все устройства, подключенные в данной комнате,
             // чтобы либо отключить их, если новые параметры комнаты
@@ -85,8 +95,13 @@ namespace HomeApi.Controllers
             // для вывода имём удалённых устройств и их подсчёта, если такие имеются
             List<DeviceView> deletedDevicesNames = new();
 
-            if (roomsDevices.Length != 0)
+            // для работы с условиями, при проверке удовлетворения требований устройств изменёнными характеристиками
+            if(editRoomRequest.NewVoltage == null) editRoomRequest.NewVoltage = room.Voltage;
+
+            // проверка на наличие подключенных устройств в комнате
+            if(roomsDevices.Length != 0)
             {
+                // обновление комнаты, если устройства можно отключать
                 if (editRoomRequest.KeepDevices == false)
                 {
                     foreach (var device in roomsDevices)
@@ -99,14 +114,31 @@ namespace HomeApi.Controllers
                         }
                     }
 
-                    await _roomRepository.Update(room, new(editRoomRequest.NewArea, editRoomRequest.NewVoltage, editRoomRequest.ChangeGasConnection));
+                    await _roomRepository.Update(room, new(editRoomRequest.NewArea, editRoomRequest.NewVoltage, editRoomRequest.ChangeGasConnection, editRoomRequest.ChangeAddDate, editRoomRequest.NewName));
+                    
+                    // если призошло изменение имени комнаты, изменяем значения у соответствующих устройств
+                    if (!string.IsNullOrEmpty(editRoomRequest.NewName) && roomsDevices != null)
+                    {
+                        // получаем обновлённую комнату
+                        var newRoom = _roomRepository.GetRoomByName(editRoomRequest.NewName).Result;
+                        // изменяем локацию для устройств, которые были подключены в изменённой комнате
+                        foreach (var device in roomsDevices)
+                        {
+                            // т.к. происходило удаление устройств, не удовлетворяющих новым хар-кам, необходима проверка на null
+                            if(device != null)
+                                await _deviceRepository.UpdateDevice(device, newRoom, new(null, null, newRoom.Name));
+                        }
+                    }
 
-                    string result = (deletedDevicesNames.Count != 0)
+                    // если есть устройства, которые были отключены - выводим их JSON формате, с помощью расширенения для List<DeviceView>, лежащего в HomeApi.Extensions
+                    // возможно, лучше просто создать папку в этом проекте, т.к. другие проекты не могут ссылаться на HomeApi.Extensions. . .
+                    var result = (deletedDevicesNames.Count != 0)
                         ? $"Комната \"{room.Name}\" успешно обновлена! Из неё было удалено {deletedDevicesNames.Count} устройств:\n {deletedDevicesNames.PrintElements()}"
                         : $"Комната \"{room.Name}\" успешно обновлена! Все устройства сохранились.";
 
                     return StatusCode(200, result);
                 }
+                // попытка обновления комнаты, если устройства отключать нельзя
                 else
                 {
                     // проверяем наличие устройств, которым не подходят новые хар-ки комнаты
@@ -116,14 +148,30 @@ namespace HomeApi.Controllers
                     if (existTroublesWithChar) return StatusCode(400, $"Ошибка: нельзя обновить комнату, сохранив устройства!");
                     else
                     {
-                        await _roomRepository.Update(room, new(editRoomRequest.NewArea, editRoomRequest.NewVoltage, editRoomRequest.ChangeGasConnection));
+                        await _roomRepository.Update(room, new(editRoomRequest.NewArea, editRoomRequest.NewVoltage, editRoomRequest.ChangeGasConnection, editRoomRequest.ChangeAddDate, editRoomRequest.NewName));
+
+                        // . . .
+                        if (!string.IsNullOrEmpty(editRoomRequest.NewName) && roomsDevices != null)
+                        {
+                            // получаем обновлённую комнату
+                            var newRoom = _roomRepository.GetRoomByName(editRoomRequest.NewName).Result;
+                            // изменяем локацию для устройств, которые были подключены в изменённой комнате
+                            foreach (var device in roomsDevices)
+                            {
+                                // т.к. происходило удаление устройств, не удовлетворяющих новым хар-кам, необходима проверка на null
+                                if (device != null)
+                                    await _deviceRepository.UpdateDevice(device, newRoom, new(null, null, newRoom.Name));
+                            }
+                        }
+
                         return StatusCode(200, $"Комната \"{room.Name}\" успешно обновлена!");
                     }
                 }
             }
+            // обновление комнаты, к которой не подключено ни одного устройства
             else
             {
-                await _roomRepository.Update(room, new(editRoomRequest.NewArea, editRoomRequest.NewVoltage, editRoomRequest.ChangeGasConnection));
+                await _roomRepository.Update(room, new(editRoomRequest.NewArea, editRoomRequest.NewVoltage, editRoomRequest.ChangeGasConnection, editRoomRequest.ChangeAddDate, editRoomRequest.NewName));
                 return StatusCode(200, $"Комната \"{room.Name}\" успешно обновлена!");
             }
         }
